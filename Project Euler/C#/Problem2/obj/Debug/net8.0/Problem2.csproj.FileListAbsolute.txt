@@ -1,0 +1,14 @@
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\bin\Debug\net8.0\Problem2.exe
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\bin\Debug\net8.0\Problem2.deps.json
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\bin\Debug\net8.0\Problem2.runtimeconfig.json
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\bin\Debug\net8.0\Problem2.dll
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\bin\Debug\net8.0\Problem2.pdb
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\obj\Debug\net8.0\Problem2.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\obj\Debug\net8.0\Problem2.AssemblyInfoInputs.cache
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\obj\Debug\net8.0\Problem2.AssemblyInfo.cs
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\obj\Debug\net8.0\Problem2.csproj.CoreCompileInputs.cache
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\obj\Debug\net8.0\Problem2.dll
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\obj\Debug\net8.0\refint\Problem2.dll
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\obj\Debug\net8.0\Problem2.pdb
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\obj\Debug\net8.0\Problem2.genruntimeconfig.cache
+C:\Users\campb\OneDrive - Griffith University\Adhoc\Ultralearning\Coding Interview\Code\Project Euler\C#\Problem2\obj\Debug\net8.0\ref\Problem2.dll
