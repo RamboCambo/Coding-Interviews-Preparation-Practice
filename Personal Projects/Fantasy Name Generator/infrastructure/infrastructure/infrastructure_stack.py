@@ -1,5 +1,5 @@
 from aws_cdk import (
-    # Duration,
+    aws_ec2 as ec2,
     Stack,
     # aws_sqs as sqs,
 )
@@ -17,3 +17,4 @@ class InfrastructureStack(Stack):
         #     self, "InfrastructureQueue",
         #     visibility_timeout=Duration.seconds(300),
         # )
+        
