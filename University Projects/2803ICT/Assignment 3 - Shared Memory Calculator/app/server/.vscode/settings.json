@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "numbers.h": "c",
+        "server.h": "c",
+        "shared_fields.h": "c",
+        "shared_memory.h": "c",
+        "semaphore.h": "c",
+        "stdint.h": "c",
+        "stdio.h": "c",
+        "stdlib.h": "c"
+    }
+}

@@ -1,0 +1,12 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+#define INPUT_MAX_LENGTH 100
+#define INPUT_COMMAND_MAX_LENGTH 10
+#define INPUT_ARGS_MAX_LENGTH 90
+
+#define PUT_MAX_FILES 10
+
+#define MAX_LINE_LENGTH 1024
+
+#endif

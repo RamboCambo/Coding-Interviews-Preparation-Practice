@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "client.h": "c",
+        "stdlib.h": "c",
+        "input_validation.h": "c",
+        "string.h": "c",
+        "ui.h": "c",
+        "queue.h": "c",
+        "form.h": "c",
+        "ncurses.h": "c"
+    }
+}
