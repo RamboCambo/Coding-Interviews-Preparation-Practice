@@ -1,0 +1,16 @@
+DR-D-DL-D-D-D-D-D-D-R-R-R-R-R-R-R-R-R
+
+Path cost:  34
+Path length:  18
+Explored states:  64
+
+SRRRRRRRRR
+RoRXXXXXXR
+RoRRXXXRRR
+oRRRRXXRXX
+oXRRRRXRRR
+oXXRRRRXXR
+oRXXRRRRXR
+oRRXXRRRXR
+oXXXXXXXXR
+oooooooooG

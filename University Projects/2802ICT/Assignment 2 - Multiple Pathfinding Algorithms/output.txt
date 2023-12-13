@@ -1,0 +1,19 @@
+DR-U-L-D-DR-L-UR-D-UL-U
+
+Path cost: 16
+Path length: 9
+Explored states: 1000
+
+SoRRX
+ooXRR
+-oXXR
+XRRXR
+RRRRG
+
+Extra Stats:
+Completion Time: 0.0060071945s
+
+Local search only!
+. == invalid position outside original board
+! == step in solution outside original board
+- == step in solution that is on cliff
