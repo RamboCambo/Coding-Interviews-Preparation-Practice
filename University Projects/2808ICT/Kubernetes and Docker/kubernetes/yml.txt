@@ -1,0 +1,228 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pizza-app-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pizza-app
+  template:
+    metadata:
+      labels:
+        app: pizza-app
+    spec:
+      containers:
+        - name: pizza-app
+          # first needs to be built: docker build -t pizzeria-node-app .
+          image: pizzeria-node-app:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080 
+          env:
+            - name: PORT
+              value: "8080"
+            - name: MONGODB_URI
+            #changed for mongo to mongo-service to work as an environment variable
+              value: "mongodb://mongo-service:27017/my-db" 
+            - name: SECRET
+              value: "my-secret"
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: pizza-app-service
+spec:
+  selector:
+    app: pizza-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-express-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        app: mongo-express
+    spec:
+      containers:
+        - name: mongo-express
+          image: mongo-express:latest
+          ports:
+            - containerPort: 8081 
+          env:
+            - name: ME_CONFIG_MONGODB_SERVER
+              value: mongo-service
+            - name: ME_CONFIG_MONGODB_PORT
+              value: "27017"
+            - name: ME_CONFIG_MONGODB_ENABLE_ADMIN
+              value: "true"
+            - name: ME_CONFIG_BASICAUTH_USERNAME
+              value: admin
+            - name: ME_CONFIG_BASICAUTH_PASSWORD
+              value: pass
+            - name: ME_CONFIG_SITE_BASEURL
+              value: /db/
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express-service
+spec:
+  selector:
+    app: mongo-express
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: nginx-certs
+              mountPath: /etc/nginx/certs
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: nginx-certs
+          secret:
+            secretName: nginx-certs
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+    - name: http
+      protocol: TCP
+      targetPort: 80
+      port: 80
+    - name: https
+      protocol: TCP
+      targetPort: 443
+      port: 443
+  type: LoadBalancer
+  
+      
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    worker_processes 1;
+
+    events { worker_connections 1024; }
+
+    http {
+      sendfile on;
+
+      upstream pizza-app-service {
+        server pizza-app-service:8080;  # Use the service name and port for HTTP
+      }
+
+      upstream mongo-express-service {
+        server mongo-express-service:8081;  # Use the service name and port for HTTPS
+      }
+
+      server {
+        listen 80;
+        server_name localhost;
+        
+        location / {
+            return 301 https://$host$request_uri;
+        }
+      }
+
+      server {
+        listen 443 ssl;
+        server_name localhost;
+
+        ssl_certificate /etc/nginx/certs/server.crt;
+        ssl_certificate_key /etc/nginx/certs/server.key;
+
+        location / {
+          proxy_pass http://pizza-app-service; 
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /db/ {
+          proxy_pass http://mongo-express-service;  
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+        }
+      }
+    }
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nginx-certs
+data:
+  #catserver.crt|base64
+  server.crt : LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVjVENDQTFtZ0F3SUJBZ0lVVjJSd3NsN05peVE4bjBaMitvVDIzZTFGRmFrd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2djY3hDekFKQmdOVkJBWVRBa0ZWTVJNd0VRWURWUVFJREFwUmRXVmxibk5zWVc1a01STXdFUVlEVlFRSApEQXBIYjJ4a0lFTnZZWE4wTVJ3d0dnWURWUVFLREJOSGNtbG1abWwwYUNCVmJtbDJaWEp6YVhSNU1TY3dKUVlEClZRUUxEQjVFWlhCaGNuUnRaVzUwSUc5bUlFTnZiWEIxZEdWeUlGTmphV1Z1WTJVeEZqQVVCZ05WQkFNTURVTmgKYlhCaVpXeHNJRkpsYVdReEx6QXRCZ2txaGtpRzl3MEJDUUVXSUdOaGJYQmlaV3hzTG5KbGFXUkFaM0pwWm1acApkR2gxYm1rdVpXUjFMbUYxTUI0WERUSXpNRGd4TnpBMk16a3hOMW9YRFRJME1EZ3hOakEyTXpreE4xb3dnY2N4CkN6QUpCZ05WQkFZVEFrRlZNUk13RVFZRFZRUUlEQXBSZFdWbGJuTnNZVzVrTVJNd0VRWURWUVFIREFwSGIyeGsKSUVOdllYTjBNUnd3R2dZRFZRUUtEQk5IY21sbVptbDBhQ0JWYm1sMlpYSnphWFI1TVNjd0pRWURWUVFMREI1RQpaWEJoY25SdFpXNTBJRzltSUVOdmJYQjFkR1Z5SUZOamFXVnVZMlV4RmpBVUJnTlZCQU1NRFVOaGJYQmlaV3hzCklGSmxhV1F4THpBdEJna3Foa2lHOXcwQkNRRVdJR05oYlhCaVpXeHNMbkpsYVdSQVozSnBabVpwZEdoMWJta3UKWldSMUxtRjFNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQWtCeC9qclIyWEo1eApwT1Rid21DYWszaDJMeGJkVSt2U21hTXhsaERKTGJzUlZMQVU2L1E4ZWtYK0N5YjFNNzJocnNuR1B1eU1peHhpCmwybUNkZFIxV0tEN3prV2czVlZGWklGbS84aysvdVJoT2FhTE5TOXFQTXQ2MlZCSHF6QVlPYm1oK3BPNTliUW0KZE9uQlNtcVJXVkUxdmxQVis4eDBZNkwvMkk4ejRtdDhhL0tCeENTd01VanVSazFzSnpYVkt5WUxSeVoyYjgzawoyTzNxRmNHRDZkOHIzMlRYbkxaMlR1OEszMkRHZ3lyTzc1b3JETmtSVElybFF3Z2FBQXdZM2YvSmpMWlQwUkRGCnQrQXhUci9iTWlMTkJaa3hidnUvKzZyNExFSUYzTHpIajYwN1NyellXb0FtTTZ6SlFuWnhJOWlrMEdIdmhmU0YKcTBySVFZVVVkUUlEQVFBQm8xTXdVVEFkQmdOVkhRNEVGZ1FVOHRLR2YvVERaN09JM1dIQ21WREtMdGZYZndndwpId1lEVlIwakJCZ3dGb0FVOHRLR2YvVERaN09JM1dIQ21WREtMdGZYZndnd0R3WURWUjBUQVFIL0JBVXdBd0VCCi96QU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFGUjFtaFVxVXBtVVpkdzl4QmlKT0d3c2dJSXowdkZJeDJtL3UKYUpUcGJ2QlhNVEhnb3ZBMGNYT3pRTnJpbmxXWUJJV1ZyTXZHdVR0MC91NWszdzRPT0VaanJrdmdzNlYyYkF6eQprc3ZVc1Zickl2bkdlZjRPZWJIN2RqVDBwMFcyZkxYMmhqWGV2U3JsNTlYeEJLMnhFV21iRm1GMzNzSkVEVWJjCjNBY1dnWGhzWWlwekl1Rlgrak1BVGpLa3NSeE55U3E1SXV2NjFhL1dMbXFhaERSZ1JnaWZmUExTNkFjWDJqUTIKMDRQclAwQ1FWdTdkeGE1NCtXVnFOVDJWTTQ1czZIM3FhVGFCeENneEFtL3FpWUlLaWY5TWZtRlVaNkFZZnRRNgpQT3hDZTRpdlIwU2hUQlF1c3hiYWlaRUpqM0w1NXZiV2VCc29FNWdEZ0pRQzJ5WlUxQT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+  #catserver.key|base64
+  server.key : LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2QUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktZd2dnU2lBZ0VBQW9JQkFRQ1FISCtPdEhaY25uR2sKNU52Q1lKcVRlSFl2RnQxVDY5S1pvekdXRU1rdHV4RlVzQlRyOUR4NlJmNExKdlV6dmFHdXljWSs3SXlMSEdLWAphWUoxMUhWWW9Qdk9SYURkVlVWa2dXYi95VDcrNUdFNXBvczFMMm84eTNyWlVFZXJNQmc1dWFINms3bjF0Q1owCjZjRkthcEZaVVRXK1U5WDd6SFJqb3YvWWp6UGlhM3hyOG9IRUpMQXhTTzVHVFd3bk5kVXJKZ3RISm5adnplVFkKN2VvVndZUHAzeXZmWk5lY3RuWk83d3JmWU1hREtzN3ZtaXNNMlJGTWl1VkRDQm9BREJqZC84bU10bFBSRU1XMwo0REZPdjlzeUlzMEZtVEZ1KzcvN3F2Z3NRZ1hjdk1lUHJUdEt2TmhhZ0NZenJNbENkbkVqMktUUVllK0Y5SVdyClNzaEJoUlIxQWdNQkFBRUNnZ0VBQlQxbG9Mdk1jbFpFNUNkR2dlTi9Ib2RkMmxCRG5VelhTUGZOeGFlUmwzRmgKSHdvUjl4SytPakhyRzZ1eTIwcmJWamdnaWE5ZktUd2Nlc3hMbTFyNldiUlRLZThvWVlDaDZ2em9VTHJMTmE3SApIMm9BRy9rLzMrNDNUUyt5azJqR2tMaGFGa2VpbG1xU2p2MStESmk3anMzczBHNFh1elhDL3RBTEhtd283K1FTCkN1UWhXNUMwR3k2S2tYLzlGMjRvdStjSzJOUEJjZmdEcEcyTHNJdnRkZzluZFJ3cktsYzVnUGhwaVhQQ2xYZjQKRHhMYW9XcWVuWE82TWFnOWNLK1RCZU5Gc3F3ZThiOHdUV3hZaHRVOUZ0blFobVFiR2VybDU5ZHkzNURickJZdgpZVzBHckE1dlR0bTRwd3pHVXFGYjl4QnZXeUtyU2FoTWVobU81NHFVb1FLQmdRREIxa1RlNWR1V0xGWTdJMnpZCklRbk5qOHhqSmhLUzkxQnllWFA0UmZPM1lvSGJ1NWJUNXN6NTl0eHBCNjlsQkRmQTRROFppL0VDNU1CYndYYk4Kamh3S01KdTZveGZiR2Y0bWE0WjRzK1dxaTVqNjA4M1VodEd6ck1nNEJ5akREWWRFQWJVTmRnZy9XSlRqTXBXbgp2U09GZU1TL2RWQ05aZUEwdjh2dTV1ZzFaUUtCZ1FDK1U5TkdjZWJGcDRxZE56VkIwMlRsdWhRT2thcVFxTXU5CitxblFmM1FkSUNzL2JzSGdsd3hCdUFlSW53NFVoSWU4N2lQc0hzNElaeXliWW00YXFJTDl4WVZISGNPNktvOEkKdXhqWkpmc0tWMlNJc3hpc0FiTnd4ajlyZjJHYUIxdVBJbk5mSk9SZHB4LzlOVzJvNG4yd2xyMmxzZFBQdkViQQpkTUg3bi9ZNTBRS0JnSDJWTVBHb3dtZTlPZkQrdHBvZ2JaVjh3TkxMNitURHpwOGNDUUtsYjQwMGlTV3ZsN3lhCkg5c2pFUklMSkp1eDY5MU84dFYrVVJ1cTBPV2hwakx2QzBPZTBvWk0vRHU3ejJsYzZMWnk5eTFUWEQzRjAra0oKbi90a3lpTmlvQW9mVGEvRjIyTnBRVmFwTVcweGJMeE1VaU03WjEwVHlLaVRoSHNvZUJ2RUJsWHhBb0dBTmRlbwo4VWpQckNMVmg5eFNhS2pRNWx4WnlEVlZOMDlKTkJseGFOWmxsc2UrOUZiMDZnQlJLMVpRYTBuenhjSW9WRDVhClV6WHp1MVRVdmJCK3pYUFdlc3dpQkJoYmdwTC9tOHl5SHR3cnhLVXNmNitLeno0NzhTOWtTWmpqbDV0MVAyelQKanByMUw3bFR4MklSLzdEek5iMnZNT3k1cXc3c1JRM0N3dGhoNDhFQ2dZQWJpdlhQOXozUmlaZUlJUmcwQTNxNwpvRmlGcy9hNmZEejRidFdFckZkTjQyQkpjR1NPMEFsU2hKOGFrVXBxR0xIZ0tzQUtFN3dqUFZKNkd0QTZQbWVtCmlkQS9wSEUvUnNPakpKdEx4U0Q5YWJOUlF4MTIzeWZWZnMvUEhQQkROQS8vSncyZWVWLzRGSnVVZFloUjN1VnEKUW5YTGFCemlBMVdIY0htbUNKa292UT09Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+

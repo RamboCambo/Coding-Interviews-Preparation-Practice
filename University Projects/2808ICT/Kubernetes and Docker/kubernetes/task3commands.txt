@@ -1,0 +1,110 @@
+Make sure you're outside of the kubernetes folder
+==========================copy paste to start ==================================
+
+minikube start --force
+eval $(minikube docker-env)
+
+docker build -t pizzeria-node-app .
+cd kubernetes
+kubectl apply -f app-deployment.yml -f app-service.yml -f mongo-deployment.yml -f mongo-service.yml -f mongo-express-deployment.yml -f mongo-express-service.yml -f nginx-deployment.yml -f nginx-service.yml -f nginx-certs.yml -f nginx-config.yml
+minikube tunnel
+
+==============================stop here ========================================
+
+press either:
+for https requests:
+https://localhost/
+https://localhost/db/
+
+for http request:
+http://localhost/
+http://localhost/db/
+
+to stop:
+minikube stop
+
+====================copy paste to delete and reapply============================
+
+kubectl delete deployments --all
+kubectl delete services --all
+kubectl delete --all -f nginx-certs.yml -f nginx-config.yml
+
+kubectl apply -f app-deployment.yml -f app-service.yml -f mongo-deployment.yml -f mongo-service.yml -f mongo-express-deployment.yml -f mongo-express-service.yml -f nginx-deployment.yml -f nginx-service.yml -f nginx-certs.yml -f nginx-config.yml
+
+kubectl get pods
+
+==============================stop here ========================================
+
+to check status:
+minikube status
+kubectl get all 
+kubectl get pods
+kubectl get services
+
+to check environment:
+echo $KUBERNETES_ENV | grep -q "true" && echo "Kubernetes environment is true" || echo "Kubernetes environment is not true"
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+=========================explanation of commands================================
+Starts minikube and forces it for the WSL (or create a non root user):
+minikube start --force
+
+optional depending on setup:
+alias kubectl="minikube kubectl --"
+
+Configure the local environment variables to run docker commands inside
+of the Minikube cluster:
+linux:
+eval $(minikube docker-env)
+
+Powershell:
+Invoke-Expression -Command (minikube docker-env)
+
+Following the last command this now builts the image in the minikube 
+environment (otherwise image won't pull during application):
+docker build -t pizzeria-node-app .
+
+Enter the folder of kubernetes where our YAML files are for k8s deployment:
+cd kubernetes
+
+Constructs our app in the minikube VM:
+kubectl apply -f app-deployment.yml -f app-service.yml -f mongo-deployment.yml -f mongo-service.yml -f mongo-express-deployment.yml -f mongo-express-service.yml -f nginx-deployment.yml -f nginx-service.yml -f nginx-certs.yml -f nginx-config.yml
+
+In a new WSL terminal, exposes the LoadBalancer (nginx-service):
+minikube tunnel
+
+press either:
+for https requests:
+https://localhost/
+https://localhost/db/
+
+for http request:
+http://localhost/
+http://localhost/db/
+
+to stop the minikube VM:
+minikube stop
+
+To check status:
+minikube status
+
+Checks all objects in the default namespace:
+kubectl get all 
+
+Checks all pods in the default namespace:
+kubectl get pods
+
+Checks all services in the default namespace:
+kubectl get services
+
+to delete all deployemnts:
+kubectl delete deployments --all
+
+To delete all services:
+kubectl delete services --all
+
+To delete the server.crt and server.key nginx certificate and nginx configuration:
+kubectl delete --all -f nginx-certs.yml -f nginx-config.yml
+
+

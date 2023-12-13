@@ -1,0 +1,31 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pizza-app-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pizza-app
+  template:
+    metadata:
+      labels:
+        app: pizza-app
+    spec:
+      containers:
+        - name: pizza-app
+          # first needs to be built: docker build -t pizzeria-node-app .
+          image: pizzeria-node-app:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080 
+          env:
+            - name: PORT
+              value: "8080"
+            - name: MONGODB_URI
+            #changed for mongo to mongo-service to work as an environment variable
+              value: "mongodb://mongo-service:27017/my-db"
+            - name: SECRET
+              value: "my-secret"
+            
